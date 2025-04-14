@@ -223,7 +223,7 @@ class TrackExtended:
     return self.Lyrics.get_url(self.config.modify_lyrics(UrlModifier.Key.ARTIST, self.value.artistName), self.config.modify_lyrics(UrlModifier.Key.TITLE, self.value.trackName))
   def get_artwork_ext(self):
     return re.match('\\..+$', self.value.artworkUrl100) if self.value.artworkUrl100 else None
-  def get_lyrics(self, to_file: bool = True) -> tuple[str | None, str]:
+  def get_lyrics(self, custom_lyrics: str | None = None, to_file: bool = True) -> tuple[str | None, str]:
     """
     Retrieves the lyrics of a song and the URL from which they were fetched.
 
@@ -233,6 +233,7 @@ class TrackExtended:
     - The second value is the URL from which the lyrics were retrieved.
 
     Parameters:
+      custom_lyrics (str | None): Custom lyrics for a track. Default: None
       to_file (bool): Choose whether to save lyrics to temp file. Default: True
     Returns:
         tuple: A tuple containing two elements:
@@ -251,7 +252,7 @@ class TrackExtended:
     lyrics_file_path = self.get_child_file('txt')
     artist = self.config.modify_lyrics(UrlModifier.Key.ARTIST, self.value.artistName)
     title = self.config.modify_lyrics(UrlModifier.Key.TITLE, self.value.trackName)
-    (lyrics, url) = self.Lyrics.get_to_file(lyrics_file_path, artist, title) if to_file else self.Lyrics.get(artist, title)
+    (lyrics, url) = self.Lyrics.get_to_file(lyrics_file_path, artist, title, custom_lyrics) if to_file else self.Lyrics.get(artist, title)
     if lyrics != None:
       l = lyrics
       modifier = self.config.data.lyrics_modifiers
@@ -273,7 +274,7 @@ class TrackExtended:
     self.Genre.parse(False)
     return self.Genre.get_str(self.config.modify_genres(UrlModifier.Key.ARTIST, self.value.artistName), self.config.modify_genres(UrlModifier.Key.TITLE, self.value.trackName), prefix='[', suffix=']')
   
-  def metadata(self, get_lyrics: bool = True, get_genres: bool = True):
+  def metadata(self, custom_lyrics: str | None = None, custom_genres: str | None = None):
     if self.__is_saved:
       raise RuntimeError('Can\'t edit metadata after save')
     # Image file name
@@ -307,12 +308,12 @@ class TrackExtended:
 
     audio.save()
 
-    (lyrics, url) = self.get_lyrics() if get_lyrics else None
-    genres = self.get_genres_str() if get_genres else None
+    (lyrics, url) = (custom_lyrics, '') if custom_lyrics else self.get_lyrics()
+    genres = custom_genres or self.get_genres_str()
 
-    if genres != None:
+    if genres is not None:
       audio['comment'] = genres
-    if lyrics != None:
+    if lyrics is not None:
       audio['lyrics'] = lyrics
 
     audio.save()  
