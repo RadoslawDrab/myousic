@@ -37,7 +37,7 @@ class AppConfig:
   lyrics_modifiers: dict[str, str] = {}
   lyrics_url_modifiers: UrlModifier = { "artist": {}, "title": {} }
   genres_url_modifiers: UrlModifier = { "artist": {}, "title": {} }
-  lyrics_provider: LyricsProvider = 'AzLyrics'
+  lyrics_provider: list[LyricsProvider] | LyricsProvider = ['AzLyrics', 'Genius']
 
   class Keys(dict):
     from uuid import UUID

@@ -9,10 +9,11 @@ from typing import Literal
 import music_tag
 from shutil import move, rmtree
 
-from track.lyrics import AzLyrics, LyricsOvh, Lyrist
+from track.lyrics import AzLyrics, LyricsOvh, Lyrist, Genius, map_provider
+from utils import sanitize_filename
 from utils.prompt import Input, Color, Confirm, clear
 from utils.config import Config
-from type.Config import UrlModifier
+from type.Config import UrlModifier, LyricsProvider
 from track.track_data import Genre, Lyrics
 
 class Explicitness(Enum):
@@ -84,10 +85,13 @@ default_track: Track = {
   'primaryGenreName': None,
   'isStreamable': None,
 }
+
 class TrackExtended:
-  def __init__(self, track: dict, audio_file_id: str, config: Config | None = None, lyrics_provider: Literal['AzLyrics', 'LyricsOvh', 'Lyrist'] = 'AzLyrics'):
+  def __init__(self, track: dict, audio_file_id: str, config: Config | None = None, lyrics_providers: list[LyricsProvider] | LyricsProvider = ['AzLyrics', 'Genius'], default_lyrics_provider: Lyrics = AzLyrics):
     default: Track = default_track.copy()
     default.update(**track)
+    self._default_lyrics_provider = default_lyrics_provider
+    self._lyrics_providers = lyrics_providers if type(lyrics_providers) == list else [lyrics_providers]
     self.value_dict: dict = default
     self.update_track(default)
 
@@ -97,16 +101,10 @@ class TrackExtended:
     self.audio_file_id = audio_file_id
     self.config = config
     self.audio_ext = None
+    self._lyrics: list[Lyrics] = []
     self.__is_saved = False
-    match lyrics_provider:
-      case 'AzLyrics':
-        self.Lyrics = AzLyrics()
-      case 'Lyrist':
-        self.Lyrics = Lyrist()
-      case 'LyricsOvh':
-        self.Lyrics = LyricsOvh()
-      case _:
-        self.Lyrics = AzLyrics()
+    for provider in self._lyrics_providers:
+      self._lyrics.append(map_provider(provider, self._default_lyrics_provider))
 
     self.Genre = Genre(
       excluded_genres=[f'^{self.value.primaryGenreName}$', *self.config.data.excluded_genres], 
@@ -114,9 +112,18 @@ class TrackExtended:
       modifiers=self.config.data.genres_modifiers
     )
 
+    self.find_lyrics_provider()
+
   def __repr__(self) -> str:
     return f'TrackExtended(id={self.audio_file_id}, title={self.value.trackName}, artist={self.value.artistName}, album={self.value.collectionName}, year={self.get_date()})'
-
+  @property
+  def Lyrics(self):
+    return self._lyrics[0] if len(self._lyrics) > 0 else self._default_lyrics_provider
+  def find_lyrics_provider(self):
+    i = 0
+    while not self.valid_lyrics() and len(self._lyrics) > 1 and i <= len(self._lyrics_providers):
+      self._lyrics.pop(0)
+      i += 1
   def get_table(self, print_table: bool = False):
     from tabulate import SEPARATING_LINE, tabulate
     track = self.value

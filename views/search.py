@@ -108,6 +108,6 @@ def init(search: str | None = None, *, config: Config) -> TrackExtended | None:
     if result is None:
       raise ValueError(f'Invalid {index} index')
 
-    return TrackExtended(result, id, config=config, lyrics_provider=config.data.lyrics_provider)
+    return TrackExtended(result, id, config=config, lyrics_providers=config.data.lyrics_provider)
   except Exit:
     return
