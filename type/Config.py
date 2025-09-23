@@ -20,9 +20,9 @@ class Sort(Enum):
   TITLE = 'title'
   ALBUM = 'album'
   YEAR = 'year'
-  class Type(Enum):
-    ASC = 'asc'
-    DESC = 'desc'
+class SortType(Enum):
+  ASC = 'asc'
+  DESC = 'desc'
 
 LyricsProvider = Literal['AzLyrics', 'LyricsOvh', 'Lyrist']
 

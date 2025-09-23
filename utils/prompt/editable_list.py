@@ -5,7 +5,7 @@ from utils.prompt.generic import clear
 from utils.prompt.list import List
 from utils.prompt.input import default_input
 
-V = TypeVar('V', default=str)
+V = TypeVar('V')
 
 class EditableList(Generic[V]):
   def __init__(self, title: str, value: list[V], editable_list: Self | None = None) -> None:

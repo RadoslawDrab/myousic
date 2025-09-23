@@ -22,7 +22,7 @@ def init(config: Config) -> None:
   
   lyrics, url = track.get_lyrics(False)
 
-  id = List[Literal['copy', 'exit']]([
+  id = List[Literal['copy', 'exit'], None]([
       List.Item('copy', 'Copy to clipboard'),
       List.Item('exit', 'Exit'),
     ], before_screen=lyrics, horizontal=True, show_count=len(lyrics.split('\n'))).get_value()

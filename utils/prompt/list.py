@@ -14,16 +14,16 @@ from utils.prompt.xml import xml_format
 from utils.classes import Listener
 from utils.number import clamp
 from utils import Exit
-from type.Config import Sort
+from type.Config import SortType
 
-Id = TypeVar('Id', default=str)
-ActionId = TypeVar('ActionId', default=str)
+Id = TypeVar('Id')
+ActionId = TypeVar('ActionId', bound=str | None)
 class ListItem(Generic[Id]):
   def __init__(self, id: Id, name: str | None = None) -> None:
     self.id = id
     self.name = name
     
-class ListSortFunction(Callable[[str, Sort.Type], list[ListItem[Id] | Id | str]]):
+class ListSortFunction(Callable[[str, SortType], list[ListItem[Id] | Id | str]]):
   pass
 class CustomBindingFunction(Callable[[list[ListItem[Id] | Id | str], int], list[ListItem[Id] | Id | str]]):
   pass
@@ -73,7 +73,7 @@ class List(Generic[Id, ActionId]):
     self.horizontal = horizontal
     self.sort_types = sort_types
     self.sort_type_index: int = -1
-    self.sort_dir: Sort.Type = Sort.Type.ASC
+    self.sort_dir: SortType = SortType.ASC
     self.list_prefix = list_prefix
     self.__show_info: bool = show_info
     self.__selection_color = selection_color
@@ -384,10 +384,10 @@ class List(Generic[Id, ActionId]):
     self.__show()
   def __change_sort_dir(self) -> None:
     if self.sort_type_index != -1:  
-      if self.sort_dir == Sort.Type.ASC:
-        self.sort_dir = Sort.Type.DESC
+      if self.sort_dir == SortType.ASC:
+        self.sort_dir = SortType.DESC
       else:
-        self.sort_dir = Sort.Type.ASC
+        self.sort_dir = SortType.ASC
       self.__set_items(self.__sort_listener.emit(self.sort_types[self.sort_type_index], self.sort_dir))
       self.__show()
   def set_sort_listener(self, listener: ListSortFunction | None) -> None:

@@ -27,7 +27,7 @@ def init(config: Config, url: str):
   
   clear()
   try:
-    id = List[Literal['download', 'exit']]([
+    id = List[Literal['download', 'exit'], None]([
         List.Item("download", "Download") if url else None, 
         List.Item('exit', 'Exit')
       ], before_screen=before_screen, horizontal=True).get_value()
