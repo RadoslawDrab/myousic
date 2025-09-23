@@ -33,7 +33,7 @@ def init(config: Config, url: str):
       ], before_screen=before_screen, horizontal=True).get_value()
     download = id == 'download'
     
-    if id == 'exit' or id == None:
+    if id == 'exit' or id is None:
       return False
     
     if url and download:
@@ -45,7 +45,7 @@ def init(config: Config, url: str):
         Confirm(before=f"Couldn't download file: {error}").start()
         return False
       except Exception as error:
-        Confirm(before=error).start()
+        Confirm(before=str(error)).start()
         return False
       
     clear()

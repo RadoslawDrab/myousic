@@ -311,7 +311,7 @@ class List(Generic[Id, ActionId]):
       data.append([get('Enter'), get('Confirm')])
       data.append([get('CTRL + C'), get('Exit')])
     
-      if self.sort_types != None and len(self.sort_types) > 0:
+      if self.sort_types is not None and len(self.sort_types) > 0:
         data.append([get('Shift + Up/Down arrows'), get('Change type')])
         data.append([get('Shift + Tab'), get('Change direction')])
       
@@ -330,15 +330,15 @@ class List(Generic[Id, ActionId]):
   def __get_info(self) -> None:
     text = ''
     try:
-      if self.before_screen != None:
+      if self.before_screen is not None:
         text += self.before_screen + '\n'
 
-      if self.title != None:
-        if self.prefix != None:
+      if self.title is not None:
+        if self.prefix is not None:
           text += Color.get_color(self.prefix, Color.SECONDARY) + ' '
         text += (self.title)
         
-      if self.sort_types != None and len(self.sort_types) > 0:
+      if self.sort_types is not None and len(self.sort_types) > 0:
         text += '\nSort: '
         if self.sort_type_index != -1:
           text += f'{self.sort_types[self.sort_type_index]} ({self.sort_dir.value.upper()})'

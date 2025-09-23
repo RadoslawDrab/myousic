@@ -16,7 +16,7 @@ def init(config: Config, url: str):
   info = ydl.extract_info(url, download=False)
     
   date = info.get('upload_date')
-  if date != None and re.match(r'\d{4}\d{2}\d{2}', date):
+  if date is not None and re.match(r'\d{4}\d{2}\d{2}', date):
     date = str(datetime.strptime(info.get('upload_date'), '%Y%m%d').year)
   
   def placeholder(text: str):

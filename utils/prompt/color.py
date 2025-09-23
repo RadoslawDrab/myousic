@@ -3,7 +3,7 @@ from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
 from utils.prompt.xml import xml_format
 
-class ColorType():
+class ColorType:
   PRIMARY = '#ff5500'
   SECONDARY = '#0055ff'
   GREY = '#555555'
@@ -15,8 +15,8 @@ class ColorType():
 class Color(ColorType):
   @staticmethod
   def remove_color(text: str):
-    match = re.search(r'(?<=\>).*(?=<\/style>)', text)
-    inside_styles = re.sub(r'<\/.*>', '', match.group()) if match else None
+    match = re.search(r'(?<=>).*(?=</style>)', text)
+    inside_styles = re.sub(r'</.*>', '', match.group()) if match else None
     return inside_styles if inside_styles else text
 
   @staticmethod
@@ -25,11 +25,11 @@ class Color(ColorType):
 
   @staticmethod
   def print_formatted(text: str, sep: str = ' ', end: str = '\n', padding_left: int = 2):
-    splitted_text = [''.ljust(padding_left) + line for line in text.split('\n')]
+    split_text = [''.ljust(padding_left) + line for line in text.split('\n')]
     try:
-      print_formatted_text(HTML(xml_format('\n'.join(splitted_text))), sep=sep, end=end)
-    except:
-      print('\n'.join(splitted_text), sep=sep, end=end)
+      print_formatted_text(HTML(xml_format('\n'.join(split_text))), sep=sep, end=end)
+    except Exception as error:
+      print('\n'.join(split_text), sep=sep, end=end)
 
   @staticmethod
   def print_color(text: str, type: ColorType, modify_type: str = 'fg', sep: str = ' ', end: str = '\n'):

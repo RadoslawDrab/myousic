@@ -21,7 +21,7 @@ def get_artist_track(config: Config, url: str) -> tuple[str, str]:
   artist: str = info.get('artist') or info.get('creator') or info.get('uploader')
   title: str = info.get('track') or info.get('fulltitle') or info.get('alt_title')
 
-  formatted_title = re.sub(' x ', ', ', re.sub('(\\[|\\().*(\\]|\\))', '', title))
+  formatted_title = re.sub(' x ', ', ', re.sub(r'(\\[|\\().*(\\]|\\))', '', title))
 
   artist_match = re.match(r'.*(?= - )', formatted_title)
   if artist_match and info.get('artist') is not None:
@@ -37,7 +37,7 @@ def get_info_term(config: Config, url: str):
   (artist, title) = get_artist_track(config, url)
   return f'{artist} - {title}'
 def valid_url(url: str | None):
-  return bool(re.match(r'https?:\/\/(youtu\.be)|(youtube\.com)\/.*', url or ''))
+  return bool(re.match(r'https?://(youtu\.be)|(youtube\.com)/.*', url or ''))
 def input_url(config: Config) -> str | None: 
   try:
     clear()

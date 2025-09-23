@@ -1,4 +1,4 @@
-import urllib
+import urllib.parse
 from typing import Literal
 
 import requests
@@ -43,7 +43,7 @@ def init(search: str | None = None, *, config: Config) -> TrackExtended | None:
     input()
     return
   
-  results: list[dict] = sorted(data['results'], key=lambda d: d[config.get_sort_key()], reverse=config.data.sort_type == SortType.DESC) if config.get_sort_key() != None else data['results']
+  results: list[dict] = sorted(data['results'], key=lambda d: d[config.get_sort_key()], reverse=config.data.sort_type == SortType.DESC) if config.get_sort_key() is not None else data['results']
 
   if len(results) == 0:
     try:
@@ -59,11 +59,11 @@ def init(search: str | None = None, *, config: Config) -> TrackExtended | None:
   def sort_results(sort_by: str | None, sort_type: SortType = SortType.ASC) -> list[List.Item]:
     from tabulate import tabulate
     data: list[dict[str, int | dict]] = []
-    sorted_results = sorted(results, key=lambda d: d[config.get_sort_key(sort_by)], reverse=sort_type == SortType.DESC) if sort_by != None else results
+    sorted_results = sorted(results, key=lambda d: d[config.get_sort_key(sort_by)], reverse=sort_type == SortType.DESC) if sort_by is not None else results
 
     for index in range(len(sorted_results)):
       r = sorted_results[index]
-      year = get_date(r.get('releaseDate')).year if r.get('releaseDate') != None else '-'
+      year = get_date(r.get('releaseDate')).year if r.get('releaseDate') is not None else '-'
       data.append({
         'id': r.get('trackId'),
         'values': {
