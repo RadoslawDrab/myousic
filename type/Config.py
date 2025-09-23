@@ -24,7 +24,7 @@ class SortType(Enum):
   ASC = 'asc'
   DESC = 'desc'
 
-LyricsProvider = Literal['AzLyrics', 'LyricsOvh', 'Lyrist']
+LyricsProvider = Literal['AzLyrics', 'LyricsOvh', 'Lyrist', 'Genius']
 
 class AppConfig:
   temp_folder: str = str(Path.joinpath(Path.home(), 'tmp'))

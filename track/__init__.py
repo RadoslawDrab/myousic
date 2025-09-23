@@ -192,7 +192,7 @@ class TrackExtended:
     Path.mkdir(dir, exist_ok=True)
     return dir
   def get_filename(self, is_temporary: bool = True):
-    return self.audio_file_id if is_temporary else (self.value.artistName + ' - ' + self.value.trackName)
+    return sanitize_filename(str(self.audio_file_id if is_temporary else (self.value.artistName + ' - ' + self.value.trackName)))
   def get_file(self, is_temporary: bool = True):
     if self.audio_ext == None:
       raise ValueError('No extension provided')
@@ -251,8 +251,8 @@ class TrackExtended:
     lyrics_file_path = self.get_child_file('txt')
     artist = self.config.modify_lyrics(UrlModifier.Key.ARTIST, self.value.artistName)
     title = self.config.modify_lyrics(UrlModifier.Key.TITLE, self.value.trackName)
-    (lyrics, url) = self.Lyrics.get_to_file(lyrics_file_path, artist, title) if to_file else self.Lyrics.get(artist, title)
-    if lyrics != None:
+    (lyrics, url) = self.Lyrics.get_to_file(str(lyrics_file_path), artist, title) if to_file else self.Lyrics.get(artist, title)
+    if lyrics is not None:
       l = lyrics
       modifier = self.config.data.lyrics_modifiers
       for key in [*modifier.keys()]:
