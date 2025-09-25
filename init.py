@@ -3,6 +3,7 @@ import argparse
 import venv
 import sys
 from pathlib import Path
+from py_exporter import PyExporter
 
 
 def get_args():
@@ -41,7 +42,7 @@ def main():
     requirements = subprocess.check_output(['pip', 'freeze'], text=True)
     with open(requirements_path, 'w') as file:
       file.write(requirements)
-    subprocess.run(['pyinstaller', '-F', 'myousic.py'])
+    PyExporter('myousic.py', name='myousic').run()
 
 def add_gitignore(name: str, path: Path = Path('./.gitignore'), raise_error: bool = False) -> None:
   if not Path.exists(path):
