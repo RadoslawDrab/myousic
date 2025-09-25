@@ -278,6 +278,7 @@ class TrackExtended:
   def get_genres_url(self):
     self.Genre.parse(False)
     return self.Genre.get_url(self.config.modify_genres(UrlModifier.Key.ARTIST, self.value.artistName), self.config.modify_genres(UrlModifier.Key.TITLE, self.value.trackName))
+
   def get_genres_str(self, genres: list[str] | None = None):
     return " ".join([f'[{genre}]' for genre in genres]) if genres else self.Genre.get_str(self.genres, prefix='[', suffix=']')
 

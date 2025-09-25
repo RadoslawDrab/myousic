@@ -3,6 +3,7 @@ from typing import Literal
 
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 from yt_dlp.utils import DownloadError
+from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 
 from track import TrackExtended
 from views.search import init as search
@@ -20,7 +21,7 @@ def init(config: Config, url: str, lyrics: str | None = None, genres: list[str] 
     t = search(term, config=config)
     if t is None:
       return False
-
+    
   _comment = comment or [url_str]
   table = t.get_table(genres=genres, comment=_comment)
   before_screen = table
@@ -29,13 +30,13 @@ def init(config: Config, url: str, lyrics: str | None = None, genres: list[str] 
     valid_genres = t.valid_genres()
     if not valid_genres:
       before_screen += '\n' + Color.get_color('Couldn\'t find genres', Color.ERROR)
-
   if lyrics is None:
     valid_lyrics = t.valid_lyrics()
     if not valid_lyrics:
       before_screen += '\n' + Color.get_color('Couldn\'t find lyrics', Color.ERROR)
 
   clear()
+
   try:
     id = List[Literal['download', 'exit'], None]([
         List.Item("download", "Download") if url else None, 
@@ -48,7 +49,7 @@ def init(config: Config, url: str, lyrics: str | None = None, genres: list[str] 
     
     if id == 'exit' or id is None:
       return False
-    
+
     if url and download:
       try:
         file_info = SimpleNamespace(**ydl.extract_info(url, download=download))
@@ -73,7 +74,6 @@ def init(config: Config, url: str, lyrics: str | None = None, genres: list[str] 
     if url and id == 'comment':
       _comment = EditableList('Comment', _comment).init()
       return init(config, url=url, track=t, comment=_comment)
-
 
     clear()
     Color.print_formatted(table)
