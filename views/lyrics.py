@@ -32,6 +32,6 @@ def init(config: Config) -> None:
       clipboard = PyperclipClipboard()
       clipboard.set_text(lyrics)
 
-      Confirm(before=Color.get_color('Lyrics coppied to clipboard', Color.SUCCESS)).start()
+      Confirm(before=Color.get_color('Lyrics copied to clipboard', Color.SUCCESS)).start()
     case None:
       raise Exit

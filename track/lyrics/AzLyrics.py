@@ -13,7 +13,7 @@ class AzLyrics(Lyrics):
 		def format_text(text: str) -> str:
 			return re.sub(r'[\[(].*[)\]]', '', re.sub(r'[ \'"]*', '', text or '')).lower()
 		return unidecode(self.lyrics_url.format(
-			artist=format_text(artist),
+			artist=format_text(artist.split(',')[0] or artist),
 			title=format_text(title))
 		)
 

@@ -15,9 +15,9 @@ from utils.config import Config
 from type.Config import UrlModifier, LyricsProvider
 from track.track_data import Genre, Lyrics
 
-class Explicitness(Enum):
+class Explicitness(str):
     notExplicit = 'notExplicit'
-    explicit = 'Explicit'
+    explicit = 'explicit'
 class Track(AttributeDict):
     wrapperType: str = None
     kind: str
@@ -130,7 +130,7 @@ class TrackExtended:
       SEPARATING_LINE,
       ['Genre', track.primaryGenreName if track.primaryGenreName else '-'],
       ['Other Genres', self.get_genres_str()],
-      ['Explicitness', track.trackExplicitness if track.trackExplicitness else '-'],
+      ['Explicitness', Color.get_color(track.trackExplicitness, Color.ERROR if track.trackExplicitness == Explicitness.explicit else Color.SUCCESS) if track.trackExplicitness else '-'],
       SEPARATING_LINE,
       ['Date', str(self.get_date())],
       ['Track', f'{track.trackNumber} / {track.trackCount}' if track.trackNumber is not None and track.trackCount is not None else '-'],
