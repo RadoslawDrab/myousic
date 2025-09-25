@@ -32,7 +32,7 @@ class Lyrics:
   
 
 class Genre:
-  def __init__(self, page_url: str = 'https://www.last.fm/music', excluded_genres: list[str] = [], included_genres: list[str] = [], modifiers: dict[str, str] = {}):
+  def __init__(self, page_url: str = 'https://www.last.fm/music/{artist}/_/{title}/+tags', excluded_genres: list[str] = [], included_genres: list[str] = [], modifiers: dict[str, str] = {}):
     self.page_url = page_url
     self.excluded_genres = excluded_genres
     self.included_genres = included_genres
@@ -71,9 +71,13 @@ class Genre:
       new_text = re.sub(regex, self.modifiers[regex], new_text)
     return new_text
   def get_url(self, artist: str, title: str) -> str:
+    if not artist:
+      artist = ''
+    if not title:
+      title = ''
     _artist = urllib.parse.quote_plus(artist) if self.__parse else re.sub('/$', '', re.sub('^/', '', artist))
     _title = urllib.parse.quote_plus(title) if self.__parse else re.sub('/$', '', re.sub('^/', '', title))
-    url = (self.page_url + '/' + _artist + '/' + _title + '/+tags').lower()
+    url = self.page_url.format(artist=_artist, title=_title).lower()
 
     page = requests.get(url)
     if not page.ok and self.__parse == False:

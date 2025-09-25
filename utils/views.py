@@ -21,7 +21,7 @@ def get_artist_track(config: Config, url: str) -> tuple[str, str]:
   artist: str = info.get('artist') or info.get('creator') or info.get('uploader')
   title: str = info.get('track') or info.get('fulltitle') or info.get('alt_title')
 
-  formatted_title = re.sub(' x ', ', ', re.sub(r'(\\[|\\().*(\\]|\\))', '', title))
+  formatted_title = re.sub(' x ', ', ', re.sub(r'[\[|(].*[])]', '', title))
 
   artist_match = re.match(r'.*(?= - )', formatted_title)
   if artist_match and info.get('artist') is not None:

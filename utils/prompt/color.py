@@ -21,7 +21,7 @@ class Color(ColorType):
 
   @staticmethod
   def get_color(text: str, type: ColorType | str, modify_type: str = 'fg'):
-    return '\n'.join([f'<style {modify_type}="{type}">{t}</style>' for t in text.split('\n')])
+    return '\n'.join([f'<style {modify_type}="{type}">{t}</style>' for t in (text or '').split('\n')])
 
   @staticmethod
   def print_formatted(text: str, sep: str = ' ', end: str = '\n', padding_left: int = 2):
