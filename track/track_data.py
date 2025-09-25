@@ -96,13 +96,13 @@ class Genre:
       
     filtered = set(filter(lambda genre: self.is_valid(genre), genres))
     return filtered
-  def get_str(self, artist: str, title: str, prefix: str | None = None, suffix: str | None = None, splitter: str = ' '):
+  def get_str(self, genres: list[str], prefix: str | None = None, suffix: str | None = None, splitter: str = ' '):
+    if len(genres) == 0:
+      return '-'
+
     new_str = ''
     pre = prefix if prefix is not None else ''
     suf = suffix if suffix is not None else ''
-    genres = self.get(artist, title)
-    if len(genres) == 0:
-      return '-'
 
     for genre in genres:
       new_str += pre + genre + suf + splitter

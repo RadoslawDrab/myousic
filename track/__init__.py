@@ -120,7 +120,17 @@ class TrackExtended:
     while not self.valid_lyrics() and len(self._lyrics) > 1 and i <= len(self._lyrics_providers):
       self._lyrics.pop(0)
       i += 1
-  def get_table(self, print_table: bool = False):
+
+  @property
+  def genres(self) -> list[str]:
+    self.Genre.parse(False)
+    return list(
+      self.Genre.get(
+        self.config.modify_genres(UrlModifier.Key.ARTIST, self.value.artistName),
+        self.config.modify_genres(UrlModifier.Key.TITLE, self.value.trackName)
+        )
+      )
+  def get_table(self, print_table: bool = False, genres: list[str] | None = None, comment: list[str] | None = None):
     from tabulate import SEPARATING_LINE, tabulate
     track = self.value
     data = [
@@ -129,7 +139,7 @@ class TrackExtended:
       ['Album', track.collectionName if track.collectionName else '-'],
       SEPARATING_LINE,
       ['Genre', track.primaryGenreName if track.primaryGenreName else '-'],
-      ['Other Genres', self.get_genres_str()],
+      ['Other Genres', self.get_genres_str(genres=genres)],
       ['Explicitness', Color.get_color(track.trackExplicitness, Color.ERROR if track.trackExplicitness == Explicitness.explicit else Color.SUCCESS) if track.trackExplicitness else '-'],
       SEPARATING_LINE,
       ['Date', str(self.get_date())],
@@ -138,7 +148,9 @@ class TrackExtended:
       SEPARATING_LINE,
       ['Artwork', Color.get_color(self.get_artwork_url(), Color.SECONDARY) if self.get_artwork_url() else '-'],
       ['Lyrics', Color.get_color(self.get_lyrics_url(), Color.SECONDARY)],
-      ['Genres', Color.get_color(self.get_genres_url(), Color.SECONDARY)]
+      ['Genres', Color.get_color(self.get_genres_url(), Color.SECONDARY)],
+      SEPARATING_LINE,
+      ['Comment', "\n".join(comment or [])]
     ]
 
     table = tabulate(data, tablefmt='plain') + '\n'
@@ -219,7 +231,7 @@ class TrackExtended:
     return self.Lyrics.get_url(self.config.modify_lyrics(UrlModifier.Key.ARTIST, self.value.artistName), self.config.modify_lyrics(UrlModifier.Key.TITLE, self.value.trackName))
   def get_artwork_ext(self):
     return re.match('\\..+$', self.value.artworkUrl100) if self.value.artworkUrl100 else None
-  def get_lyrics(self, to_file: bool = True) -> tuple[str | None, str]:
+  def get_lyrics(self, custom_lyrics: str | None = None, to_file: bool = True) -> tuple[str | None, str]:
     """
     Retrieves the lyrics of a song and the URL from which they were fetched.
 
@@ -229,6 +241,7 @@ class TrackExtended:
     - The second value is the URL from which the lyrics were retrieved.
 
     Parameters:
+      custom_lyrics (str | None): Custom lyrics for a track. Default: None
       to_file (bool): Choose whether to save lyrics to temp file. Default: True
     Returns:
         tuple: A tuple containing two elements:
@@ -247,7 +260,7 @@ class TrackExtended:
     lyrics_file_path = self.get_child_file('txt')
     artist = self.config.modify_lyrics(UrlModifier.Key.ARTIST, self.value.artistName)
     title = self.config.modify_lyrics(UrlModifier.Key.TITLE, self.value.trackName)
-    (lyrics, url) = self.Lyrics.get_to_file(str(lyrics_file_path), artist, title) if to_file else self.Lyrics.get(artist, title)
+    (lyrics, url) = self.Lyrics.get_to_file(str(lyrics_file_path), artist, title, custom_lyrics) if to_file else self.Lyrics.get(artist, title)
     if lyrics is not None:
       l = lyrics
       modifier = self.config.data.lyrics_modifiers
@@ -265,11 +278,10 @@ class TrackExtended:
   def get_genres_url(self):
     self.Genre.parse(False)
     return self.Genre.get_url(self.config.modify_genres(UrlModifier.Key.ARTIST, self.value.artistName), self.config.modify_genres(UrlModifier.Key.TITLE, self.value.trackName))
-  def get_genres_str(self):
-    self.Genre.parse(False)
-    return self.Genre.get_str(self.config.modify_genres(UrlModifier.Key.ARTIST, self.value.artistName), self.config.modify_genres(UrlModifier.Key.TITLE, self.value.trackName), prefix='[', suffix=']')
-  
-  def metadata(self, get_lyrics: bool = True, get_genres: bool = True):
+  def get_genres_str(self, genres: list[str] | None = None):
+    return " ".join([f'[{genre}]' for genre in genres]) if genres else self.Genre.get_str(self.genres, prefix='[', suffix=']')
+
+  def metadata(self, custom_lyrics: str | None = None, custom_genres: list[str] | None = None, comment: list[str] | None = None):
     if self.__is_saved:
       raise RuntimeError('Can\'t edit metadata after save')
     # Image file name
@@ -303,11 +315,14 @@ class TrackExtended:
 
     audio.save()
 
-    (lyrics, url) = self.get_lyrics() if get_lyrics else None
-    genres = self.get_genres_str() if get_genres else None
+    (lyrics, url) = (custom_lyrics, '') if custom_lyrics else self.get_lyrics()
+    genres = self.get_genres_str(genres=custom_genres)
+    _comment = comment or []
 
-    if genres is not None:
-      audio['comment'] = genres
+    _comment.insert(0, genres)
+
+    audio['comment'] = "\n".join(_comment)
+
     if lyrics is not None:
       audio['lyrics'] = lyrics
 
