@@ -3,12 +3,14 @@ from typing import Callable, TypeVar, Generic
 Function = TypeVar('Function', bound=Callable)
 class Listener(Generic[Function]):
   def __init__(self, listener: Function | None = None):
-    self.__listener = self.set(listener)
+    self.__listener: Function | None = None
+    self.set(listener)
     pass
   def set(self, listener: Function | None):
     self.__listener = listener
+    return self.__listener
   def emit(self, *args):
-    return self.__listener(*args) if self.__listener != None else None
+    return self.__listener(*args) if self.__listener is not None else None
 class Listeners(Generic[Function]):
   def __init__(self, listeners: list[Function] = []):
     self.__listeners = listeners

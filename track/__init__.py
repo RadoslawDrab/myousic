@@ -1,95 +1,95 @@
 from enum import Enum
-from types import SimpleNamespace
 from datetime import datetime
 import re
 from pathlib import Path
 import urllib.request, urllib.parse
-from typing import Literal
+
 
 import music_tag
 from shutil import move, rmtree
 
-from track.lyrics import AzLyrics, LyricsOvh, Lyrist
+from track.lyrics import AzLyrics, LyricsOvh, Lyrist, Genius, map_provider
+from utils import AttributeDict, sanitize_filename
 from utils.prompt import Input, Color, Confirm, clear
 from utils.config import Config
-from type.Config import UrlModifier
+from type.Config import UrlModifier, LyricsProvider
 from track.track_data import Genre, Lyrics
 
 class Explicitness(str):
-  notExplicit = 'notExplicit'
-  explicit = 'explicit'
-class Track(dict):
-  wrapperType: str = None
-  kind: str
-  artistId: int = None
-  collectionId: int = None
-  trackId: int = None
-  artistName: str = None
-  collectionName: str = None
-  trackName: str = None
-  collectionCensoredName: str = None
-  trackCensoredName: str = None
-  artistViewUrl: str = None
-  collectionViewUrl: str = None
-  trackViewUrl: str = None
-  previewUrl: str = None
-  artworkUrl30: str = None
-  artworkUrl60: str = None
-  artworkUrl100: str = None
-  collectionPrice: float = None
-  trackPrice: float = None
-  releaseDate: str = None
-  collectionExplicitness: Explicitness = None 
-  trackExplicitness: Explicitness = None
-  discCount: int = None
-  discNumber: int = None
-  trackCount: int = None
-  trackNumber: int = None
-  trackTimeMillis: int = None
-  country: str = None
-  currency: str = None
-  primaryGenreName: str = None
-  isStreamable: bool = None
+    notExplicit = 'notExplicit'
+    explicit = 'explicit'
+class Track(AttributeDict):
+    wrapperType: str = None
+    kind: str
+    artistId: int = None
+    collectionId: int = None
+    trackId: int = None
+    artistName: str = None
+    collectionName: str = None
+    trackName: str = None
+    collectionCensoredName: str = None
+    trackCensoredName: str = None
+    artistViewUrl: str = None
+    collectionViewUrl: str = None
+    trackViewUrl: str = None
+    previewUrl: str = None
+    artworkUrl30: str = None
+    artworkUrl60: str = None
+    artworkUrl100: str = None
+    collectionPrice: float = None
+    trackPrice: float = None
+    releaseDate: str = None
+    collectionExplicitness: Explicitness = None
+    trackExplicitness: Explicitness = None
+    discCount: int = None
+    discNumber: int = None
+    trackCount: int = None
+    trackNumber: int = None
+    trackTimeMillis: int = None
+    country: str = None
+    currency: str = None
+    primaryGenreName: str = None
+    isStreamable: bool = None
 
-default_track: Track = {
-  'wrapperType': None,
-  'kind': None,
-  'artistId': None,
-  'collectionId': None,
-  'trackId': None,
-  'artistName': None,
-  'collectionName': None,
-  'trackName': None,
-  'collectionCensoredName': None,
-  'trackCensoredName': None,
-  'artistViewUrl': None,
-  'collectionViewUrl': None,
-  'trackViewUrl': None,
-  'previewUrl': None,
-  'artworkUrl30': None,
-  'artworkUrl60': None,
-  'artworkUrl100': None,
-  'collectionPrice': None,
-  'trackPrice': None,
-  'releaseDate': None,
-  'collectionExplicitness': None, 
-  'trackExplicitness': None,
-  'discCount': None,
-  'discNumber': None,
-  'trackCount': None,
-  'trackNumber': None,
-  'trackTimeMillis': None,
-  'country': None,
-  'currency': None,
-  'primaryGenreName': None,
-  'isStreamable': None,
-}
+default_track: Track = Track(
+  wrapperType=None,
+  kind=None,
+  artistId=None,
+  collectionId=None,
+  trackId=None,
+  artistName=None,
+  collectionName=None,
+  trackName=None,
+  collectionCensoredName=None,
+  trackCensoredName=None,
+  artistViewUrl=None,
+  collectionViewUrl=None,
+  trackViewUrl=None,
+  previewUrl=None,
+  artworkUrl30=None,
+  artworkUrl60=None,
+  artworkUrl100=None,
+  collectionPrice=None,
+  trackPrice=None,
+  releaseDate=None,
+  collectionExplicitness=None,
+  trackExplicitness=None,
+  discCount=None,
+  discNumber=None,
+  trackCount=None,
+  trackNumber=None,
+  trackTimeMillis=None,
+  country=None,
+  currency=None,
+  primaryGenreName=None,
+  isStreamable=None,
+)
+
 class TrackExtended:
-  def __init__(self, track: dict, audio_file_id: str, config: Config | None = None, lyrics_provider: Literal['AzLyrics', 'LyricsOvh', 'Lyrist'] = 'AzLyrics'):
-    default: Track = default_track.copy()
-    default.update(**track)
-    self.value_dict: dict = default
-    self.update_track(default)
+  def __init__(self, track: dict, audio_file_id: str, config: Config | None = None, lyrics_providers: list[LyricsProvider] | LyricsProvider = ['AzLyrics', 'Genius'], default_lyrics_provider: Lyrics = AzLyrics):
+    self._default_lyrics_provider = default_lyrics_provider
+    self._lyrics_providers = lyrics_providers if type(lyrics_providers) == list else [lyrics_providers]
+    self.value: Track = Track(**track)
 
     self.temp_folder = Path(config.data.temp_folder) or Path.joinpath(config.path, Path('tmp'))
     self.output_folder = config.data.output_folder or './'
@@ -97,16 +97,10 @@ class TrackExtended:
     self.audio_file_id = audio_file_id
     self.config = config
     self.audio_ext = None
+    self._lyrics: list[Lyrics] = []
     self.__is_saved = False
-    match lyrics_provider:
-      case 'AzLyrics':
-        self.Lyrics = AzLyrics()
-      case 'Lyrist':
-        self.Lyrics = Lyrist()
-      case 'LyricsOvh':
-        self.Lyrics = LyricsOvh()
-      case _:
-        self.Lyrics = AzLyrics()
+    for provider in self._lyrics_providers:
+      self._lyrics.append(map_provider(provider, self._default_lyrics_provider))
 
     self.Genre = Genre(
       excluded_genres=[f'^{self.value.primaryGenreName}$', *self.config.data.excluded_genres], 
@@ -114,10 +108,29 @@ class TrackExtended:
       modifiers=self.config.data.genres_modifiers
     )
 
+    self.find_lyrics_provider()
+
   def __repr__(self) -> str:
     return f'TrackExtended(id={self.audio_file_id}, title={self.value.trackName}, artist={self.value.artistName}, album={self.value.collectionName}, year={self.get_date()})'
+  @property
+  def Lyrics(self):
+    return self._lyrics[0] if len(self._lyrics) > 0 else self._default_lyrics_provider
+  def find_lyrics_provider(self):
+    i = 0
+    while not self.valid_lyrics() and len(self._lyrics) > 1 and i <= len(self._lyrics_providers):
+      self._lyrics.pop(0)
+      i += 1
 
-  def get_table(self, print_table: bool = False):
+  @property
+  def genres(self) -> list[str]:
+    self.Genre.parse(False)
+    return list(
+      self.Genre.get(
+        self.config.modify_genres(UrlModifier.Key.ARTIST, self.value.artistName),
+        self.config.modify_genres(UrlModifier.Key.TITLE, self.value.trackName)
+        )
+      )
+  def get_table(self, print_table: bool = False, genres: list[str] | None = None, comment: list[str] | None = None):
     from tabulate import SEPARATING_LINE, tabulate
     track = self.value
     data = [
@@ -126,16 +139,18 @@ class TrackExtended:
       ['Album', track.collectionName if track.collectionName else '-'],
       SEPARATING_LINE,
       ['Genre', track.primaryGenreName if track.primaryGenreName else '-'],
-      ['Other Genres', self.get_genres_str()],
+      ['Other Genres', self.get_genres_str(genres=genres)],
       ['Explicitness', Color.get_color(track.trackExplicitness, Color.ERROR if track.trackExplicitness == Explicitness.explicit else Color.SUCCESS) if track.trackExplicitness else '-'],
       SEPARATING_LINE,
       ['Date', str(self.get_date())],
-      ['Track', f'{track.trackNumber} / {track.trackCount}' if track.trackNumber != None and track.trackCount != None else '-'],
-      ['Disc', f'{track.discNumber} / {track.discCount}' if track.discNumber != None and track.discCount != None else '-'],
+      ['Track', f'{track.trackNumber} / {track.trackCount}' if track.trackNumber is not None and track.trackCount is not None else '-'],
+      ['Disc', f'{track.discNumber} / {track.discCount}' if track.discNumber is not None and track.discCount is not None else '-'],
       SEPARATING_LINE,
       ['Artwork', Color.get_color(self.get_artwork_url(), Color.SECONDARY) if self.get_artwork_url() else '-'],
       ['Lyrics', Color.get_color(self.get_lyrics_url(), Color.SECONDARY)],
-      ['Genres', Color.get_color(self.get_genres_url(), Color.SECONDARY)]
+      ['Genres', Color.get_color(self.get_genres_url(), Color.SECONDARY)],
+      SEPARATING_LINE,
+      ['Comment', "\n".join(comment or [])]
     ]
 
     table = tabulate(data, tablefmt='plain') + '\n'
@@ -147,13 +162,13 @@ class TrackExtended:
 
   def get_missing(self, included: dict[str, str | tuple[str, str]] = {}, excluded_keys: list[str] = []):
     keys: dict[str, tuple[str, str | None]] = {}
-    for key in self.value_dict.keys():
+    for key in self.value.keys():
       if len(excluded_keys) > 0 and key in excluded_keys:
         continue
       if len(included.keys()) > 0 and key not in included.keys():
         continue
 
-      if self.value_dict[key] != None:
+      if self.value[key] is not None:
         continue
       
       new_dict: dict[tuple[str, str | None]] = {}
@@ -167,16 +182,9 @@ class TrackExtended:
     values = Input('Values', *keys.values()).start()
     for key_index in range(len(keys.keys())):
       key = [*keys.keys()][key_index]
-      self.update_track({
-        key: values[key_index]
-      })
+      self.value.update({ key: values[key_index] })
     clear()
-      
-  def update_track(self, track: dict):
-    if not self.value_dict:
-      self.value_dict = default_track.copy()
-    self.value_dict.update(**track)
-    self.value: Track = SimpleNamespace(**self.value_dict)
+
   def assign_file(self, audio_ext: str):
     self.set_ext(audio_ext)
     file = Path(self.get_file())
@@ -187,14 +195,14 @@ class TrackExtended:
 
   def get_dir(self, is_temporary: bool = True):
     user_regex = r'^\~\/'
-    is_home = re.match(user_regex, self.output_folder) != None
+    is_home = re.match(user_regex, self.output_folder) is not None
     dir = Path.joinpath(Path.cwd(), self.temp_folder) if is_temporary else Path.joinpath(Path.home() if is_home else Path.cwd(), re.sub(user_regex, '', self.output_folder))
     Path.mkdir(dir, exist_ok=True)
     return dir
   def get_filename(self, is_temporary: bool = True):
-    return self.audio_file_id if is_temporary else (self.value.artistName + ' - ' + self.value.trackName)
+    return sanitize_filename(str(self.audio_file_id if is_temporary else (self.value.artistName + ' - ' + self.value.trackName)))
   def get_file(self, is_temporary: bool = True):
-    if self.audio_ext == None:
+    if self.audio_ext is None:
       raise ValueError('No extension provided')
     return f'{self.get_filename(is_temporary)}.{self.audio_ext}'
 
@@ -213,7 +221,7 @@ class TrackExtended:
 
   def get_date(self):
     date = self.value.releaseDate
-    if date == None:
+    if date is None:
       return datetime.now().year
     date_regex = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z'
     return datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ").year if re.match(date_regex, date) else date if date != '' else datetime.now().year
@@ -252,8 +260,8 @@ class TrackExtended:
     lyrics_file_path = self.get_child_file('txt')
     artist = self.config.modify_lyrics(UrlModifier.Key.ARTIST, self.value.artistName)
     title = self.config.modify_lyrics(UrlModifier.Key.TITLE, self.value.trackName)
-    (lyrics, url) = self.Lyrics.get_to_file(lyrics_file_path, artist, title, custom_lyrics) if to_file else self.Lyrics.get(artist, title)
-    if lyrics != None:
+    (lyrics, url) = self.Lyrics.get_to_file(str(lyrics_file_path), artist, title, custom_lyrics) if to_file else self.Lyrics.get(artist, title)
+    if lyrics is not None:
       l = lyrics
       modifier = self.config.data.lyrics_modifiers
       for key in [*modifier.keys()]:
@@ -270,11 +278,11 @@ class TrackExtended:
   def get_genres_url(self):
     self.Genre.parse(False)
     return self.Genre.get_url(self.config.modify_genres(UrlModifier.Key.ARTIST, self.value.artistName), self.config.modify_genres(UrlModifier.Key.TITLE, self.value.trackName))
-  def get_genres_str(self):
-    self.Genre.parse(False)
-    return self.Genre.get_str(self.config.modify_genres(UrlModifier.Key.ARTIST, self.value.artistName), self.config.modify_genres(UrlModifier.Key.TITLE, self.value.trackName), prefix='[', suffix=']')
-  
-  def metadata(self, custom_lyrics: str | None = None, custom_genres: str | None = None):
+
+  def get_genres_str(self, genres: list[str] | None = None):
+    return " ".join([f'[{genre}]' for genre in genres]) if genres else self.Genre.get_str(self.genres, prefix='[', suffix=']')
+
+  def metadata(self, custom_lyrics: str | None = None, custom_genres: list[str] | None = None, comment: list[str] | None = None):
     if self.__is_saved:
       raise RuntimeError('Can\'t edit metadata after save')
     # Image file name
@@ -309,10 +317,13 @@ class TrackExtended:
     audio.save()
 
     (lyrics, url) = (custom_lyrics, '') if custom_lyrics else self.get_lyrics()
-    genres = custom_genres or self.get_genres_str()
+    genres = self.get_genres_str(genres=custom_genres)
+    _comment = comment or []
 
-    if genres is not None:
-      audio['comment'] = genres
+    _comment.insert(0, genres)
+
+    audio['comment'] = "\n".join(_comment)
+
     if lyrics is not None:
       audio['lyrics'] = lyrics
 

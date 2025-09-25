@@ -1,4 +1,4 @@
-import urllib
+import urllib.parse
 from typing import Literal
 
 import requests
@@ -11,7 +11,7 @@ from utils import Exit
 from utils.config import Config
 from utils.views import search_menu
 from utils.prompt import List, Color, clear
-from type.Config import Sort
+from type.Config import SortType
 
 
 def init(search: str | None = None, *, config: Config) -> TrackExtended | None:
@@ -43,7 +43,7 @@ def init(search: str | None = None, *, config: Config) -> TrackExtended | None:
     input()
     return
   
-  results: list[dict] = sorted(data['results'], key=lambda d: d[config.get_sort_key()], reverse=config.data.sort_type == Sort.Type.DESC) if config.get_sort_key() != None else data['results']    
+  results: list[dict] = sorted(data['results'], key=lambda d: d[config.get_sort_key()], reverse=config.data.sort_type == SortType.DESC) if config.get_sort_key() is not None else data['results']
 
   if len(results) == 0:
     try:
@@ -56,14 +56,14 @@ def init(search: str | None = None, *, config: Config) -> TrackExtended | None:
   def get_date(date: str):
     return datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
   
-  def sort_results(sort_by: str | None, sort_type: Sort.Type = Sort.Type.ASC) -> list[List.Item]:
+  def sort_results(sort_by: str | None, sort_type: SortType = SortType.ASC) -> list[List.Item]:
     from tabulate import tabulate
     data: list[dict[str, int | dict]] = []
-    sorted_results = sorted(results, key=lambda d: d[config.get_sort_key(sort_by)], reverse=sort_type == Sort.Type.DESC) if sort_by != None else results
+    sorted_results = sorted(results, key=lambda d: d[config.get_sort_key(sort_by)], reverse=sort_type == SortType.DESC) if sort_by is not None else results
 
     for index in range(len(sorted_results)):
       r = sorted_results[index]
-      year = get_date(r.get('releaseDate')).year if r.get('releaseDate') != None else '-'
+      year = get_date(r.get('releaseDate')).year if r.get('releaseDate') is not None else '-'
       data.append({
         'id': r.get('trackId'),
         'values': {
@@ -81,7 +81,7 @@ def init(search: str | None = None, *, config: Config) -> TrackExtended | None:
     return [List.Item(str(data[index].get('id')), lines[index]) for index in range(len(lines))]
 
   title = f"Select for {Color.get_color(search, Color.PRIMARY)}"
-  options = sort_results(None, Sort.Type.ASC)
+  options = sort_results(None, SortType.ASC)
   
   try:
     if len(options) <= 0: return
@@ -108,6 +108,6 @@ def init(search: str | None = None, *, config: Config) -> TrackExtended | None:
     if result is None:
       raise ValueError(f'Invalid {index} index')
 
-    return TrackExtended(result, id, config=config, lyrics_provider=config.data.lyrics_provider)
+    return TrackExtended(result, id, config=config, lyrics_providers=config.data.lyrics_provider)
   except Exit:
     return

@@ -2,7 +2,7 @@ from typing import Literal
 from tabulate import tabulate
 
 from utils import Exit
-from utils.prompt import clear, List, Color, default_input, EditableList, EditableDict
+from utils.prompt import clear, List, Color, default_input, EditableList
 from utils.config import Config
 from utils.classes import Obj
 
