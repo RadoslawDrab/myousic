@@ -1,60 +1,55 @@
 from enum import Enum
-from types import SimpleNamespace
 from datetime import datetime
 import re
 from pathlib import Path
 import urllib.request, urllib.parse
-from typing import Literal
+
 
 import music_tag
 from shutil import move, rmtree
 
 from track.lyrics import AzLyrics, LyricsOvh, Lyrist, Genius, map_provider
-from utils import sanitize_filename
+from utils import AttributeDict, sanitize_filename
 from utils.prompt import Input, Color, Confirm, clear
 from utils.config import Config
 from type.Config import UrlModifier, LyricsProvider
 from track.track_data import Genre, Lyrics
 
 class Explicitness(Enum):
-  notExplicit = 'notExplicit'
-  explicit = 'Explicit'
-class Track(dict):
-  wrapperType: str = None
-  kind: str
-  artistId: int = None
-  collectionId: int = None
-  trackId: int = None
-  artistName: str = None
-  collectionName: str = None
-  trackName: str = None
-  collectionCensoredName: str = None
-  trackCensoredName: str = None
-  artistViewUrl: str = None
-  collectionViewUrl: str = None
-  trackViewUrl: str = None
-  previewUrl: str = None
-  artworkUrl30: str = None
-  artworkUrl60: str = None
-  artworkUrl100: str = None
-  collectionPrice: float = None
-  trackPrice: float = None
-  releaseDate: str = None
-  collectionExplicitness: Explicitness = None 
-  trackExplicitness: Explicitness = None
-  discCount: int = None
-  discNumber: int = None
-  trackCount: int = None
-  trackNumber: int = None
-  trackTimeMillis: int = None
-  country: str = None
-  currency: str = None
-  primaryGenreName: str = None
-  isStreamable: bool = None
-
-  def __init__(self, **kwargs):
-    self.update({ key: value for key, value in kwargs if key in self.keys() })
-    super().__init__()
+    notExplicit = 'notExplicit'
+    explicit = 'Explicit'
+class Track(AttributeDict):
+    wrapperType: str = None
+    kind: str
+    artistId: int = None
+    collectionId: int = None
+    trackId: int = None
+    artistName: str = None
+    collectionName: str = None
+    trackName: str = None
+    collectionCensoredName: str = None
+    trackCensoredName: str = None
+    artistViewUrl: str = None
+    collectionViewUrl: str = None
+    trackViewUrl: str = None
+    previewUrl: str = None
+    artworkUrl30: str = None
+    artworkUrl60: str = None
+    artworkUrl100: str = None
+    collectionPrice: float = None
+    trackPrice: float = None
+    releaseDate: str = None
+    collectionExplicitness: Explicitness = None
+    trackExplicitness: Explicitness = None
+    discCount: int = None
+    discNumber: int = None
+    trackCount: int = None
+    trackNumber: int = None
+    trackTimeMillis: int = None
+    country: str = None
+    currency: str = None
+    primaryGenreName: str = None
+    isStreamable: bool = None
 
 default_track: Track = Track(
   wrapperType=None,
@@ -92,12 +87,9 @@ default_track: Track = Track(
 
 class TrackExtended:
   def __init__(self, track: dict, audio_file_id: str, config: Config | None = None, lyrics_providers: list[LyricsProvider] | LyricsProvider = ['AzLyrics', 'Genius'], default_lyrics_provider: Lyrics = AzLyrics):
-    default: Track = Track(**track)
     self._default_lyrics_provider = default_lyrics_provider
     self._lyrics_providers = lyrics_providers if type(lyrics_providers) == list else [lyrics_providers]
-    self.value_dict: dict = default
-    self.value: Track = Track()
-    self.update_track(default)
+    self.value: Track = Track(**track)
 
     self.temp_folder = Path(config.data.temp_folder) or Path.joinpath(config.path, Path('tmp'))
     self.output_folder = config.data.output_folder or './'
@@ -158,13 +150,13 @@ class TrackExtended:
 
   def get_missing(self, included: dict[str, str | tuple[str, str]] = {}, excluded_keys: list[str] = []):
     keys: dict[str, tuple[str, str | None]] = {}
-    for key in self.value_dict.keys():
+    for key in self.value.keys():
       if len(excluded_keys) > 0 and key in excluded_keys:
         continue
       if len(included.keys()) > 0 and key not in included.keys():
         continue
 
-      if self.value_dict[key] is not None:
+      if self.value[key] is not None:
         continue
       
       new_dict: dict[tuple[str, str | None]] = {}
@@ -178,16 +170,8 @@ class TrackExtended:
     values = Input('Values', *keys.values()).start()
     for key_index in range(len(keys.keys())):
       key = [*keys.keys()][key_index]
-      self.update_track({
-        key: values[key_index]
-      })
+      self.value.update({ key: values[key_index] })
     clear()
-      
-  def update_track(self, track: dict):
-    if not self.value_dict:
-      self.value_dict = default_track.copy()
-    self.value_dict.update(**track)
-    self.value = Track(**self.value_dict)
 
   def assign_file(self, audio_ext: str):
     self.set_ext(audio_ext)
