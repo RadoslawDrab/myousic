@@ -8,8 +8,8 @@ from utils.prompt.generic import clear
 from utils import Exit
 
 class Input:
-  def __init__(self, title: str | None = None, *prompts: list[str | tuple[str, str | None]]):
-    self.__prompts: list[str | tuple[str, str]] = prompts
+  def __init__(self, title: str | None = None, *prompts: str | tuple[str, str | None]):
+    self.__prompts: list[str | tuple[str, str]] = list(prompts)
     self.__values: list[str] = []
     self.__title = title
     
@@ -50,14 +50,14 @@ class Input:
 
 V = TypeVar("V", int, str)
 def default_input(name: str, value: V | None = None) -> V:
-  '''
+  """
   Parameters:
     name (`str`): input name
     value (`V | None`): default value
 
   Returns:
     `V` - same type as value
-  '''
+  """
   [v] = Input(
     name, 
     (f'{'New' if value else 'Set'}: ', Color.get_color(str(value or ''), Color.GREY))

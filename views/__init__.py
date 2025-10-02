@@ -21,9 +21,12 @@ def init():
   config.set_key('id', uuid4())
   config.set_key('temp_folder', config.data.temp_folder)
   config.set_key('output_folder', config.data.output_folder)
-  
+
+  Path(config.data.temp_folder).mkdir(exist_ok=True)
+  Path(config.data.output_folder).mkdir(exist_ok=True)
+
   try:
-    id = List[Literal['search-download', 'search', 'download', 'lyrics', 'settings', 'exit']]([
+    id = List[Literal['search-download', 'search', 'download', 'lyrics', 'settings', 'exit'], None]([
       List.Item("search-download", "Search and Download"), 
       List.Item("search", "Search"), 
       List.Item("download", "Download"), 

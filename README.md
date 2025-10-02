@@ -112,12 +112,12 @@ It'll create `config.json` in your home directory
 | output_folder        | `str`                         | Folder where the final music files will be moved after download.                                                                                                                                 |
 | artwork_size         | `int`                         | The maximum size (in pixels) of album artwork to download.                                                                                                                                       |
 | excluded_genres      | [`SearchList`](#searchlist)   | A list of genres to exclude when searching or filtering music. This helps to narrow down results based on your preferences.                                                                      |
-| included_genres      | [`SearchList`](#searchlist)`  | A list of genres to include when searching for songs. Genres can be defined using regular expressions (e.g., "Rock$" to include all rock genres).                                                |
+| included_genres      | [`SearchList`](#searchlist)  | A list of genres to include when searching for songs. Genres can be defined using regular expressions (e.g., "Rock$" to include all rock genres).                                                |
 | genres_modifiers     | [`Modifier`](#modifier)       | A dictionary of regular expressions and their replacements to modify the genre field. For example, this could be used to map different versions of a genre name (e.g., Alt becomes Alternative). |
 | lyrics_modifiers     | [`Modifier`](#modifier)       | An object that allows modification of lyrics-related metadata. This can be used to clean or adjust lyrics data.                                                                                  |
 | lyrics_url_modifiers | [`UrlModifier`](#urlmodifier) | Modifiers for URLs related to lyrics fetching, such as cleaning up artist names by removing unwanted characters.                                                                                 |
 | genres_url_modifiers | [`UrlModifier`](#urlmodifier) | Modifiers for genre-related URLs, typically used to clean up artist names or apply regex replacements for specific cases.                                                                        |
-| lyrics_provider      | [`Provider`](#provider)       | Literal which allows user to change lyrics provider                                                                                                                                              |
+| lyrics_provider      | <code>list\[[Provider](#provider)\] \| [Provider](#provider) </code>        | Literal which allows user to change lyrics provider                                                                                                                                              |
 | show_count           | `int`                         | Number of search results to display from the iTunes API when searching for a song.                                                                                                               |
 
 ### Types
@@ -152,7 +152,7 @@ dict[Search, str]
 #### `Provider`
 
 ```python
-Literal['AzLyrics', 'LyricsOvh', 'Lyrist']
+Literal['AzLyrics', 'LyricsOvh', 'Lyrist', 'Genius']
 ```
 
 ## iTunes API Search

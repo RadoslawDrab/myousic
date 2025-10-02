@@ -14,16 +14,16 @@ from utils.prompt.xml import xml_format
 from utils.classes import Listener
 from utils.number import clamp
 from utils import Exit
-from type.Config import Sort
+from type.Config import SortType
 
-Id = TypeVar('Id', default=str)
-ActionId = TypeVar('ActionId', default=str)
+Id = TypeVar('Id')
+ActionId = TypeVar('ActionId', bound=str | None)
 class ListItem(Generic[Id]):
   def __init__(self, id: Id, name: str | None = None) -> None:
     self.id = id
     self.name = name
     
-class ListSortFunction(Callable[[str, Sort.Type], list[ListItem[Id] | Id | str]]):
+class ListSortFunction(Callable[[str, SortType], list[ListItem[Id] | Id | str]]):
   pass
 class CustomBindingFunction(Callable[[list[ListItem[Id] | Id | str], int], list[ListItem[Id] | Id | str]]):
   pass
@@ -73,7 +73,7 @@ class List(Generic[Id, ActionId]):
     self.horizontal = horizontal
     self.sort_types = sort_types
     self.sort_type_index: int = -1
-    self.sort_dir: Sort.Type = Sort.Type.ASC
+    self.sort_dir: SortType = SortType.ASC
     self.list_prefix = list_prefix
     self.__show_info: bool = show_info
     self.__selection_color = selection_color
@@ -311,7 +311,7 @@ class List(Generic[Id, ActionId]):
       data.append([get('Enter'), get('Confirm')])
       data.append([get('CTRL + C'), get('Exit')])
     
-      if self.sort_types != None and len(self.sort_types) > 0:
+      if self.sort_types is not None and len(self.sort_types) > 0:
         data.append([get('Shift + Up/Down arrows'), get('Change type')])
         data.append([get('Shift + Tab'), get('Change direction')])
       
@@ -330,15 +330,15 @@ class List(Generic[Id, ActionId]):
   def __get_info(self) -> None:
     text = ''
     try:
-      if self.before_screen != None:
+      if self.before_screen is not None:
         text += self.before_screen + '\n'
 
-      if self.title != None:
-        if self.prefix != None:
+      if self.title is not None:
+        if self.prefix is not None:
           text += Color.get_color(self.prefix, Color.SECONDARY) + ' '
         text += (self.title)
         
-      if self.sort_types != None and len(self.sort_types) > 0:
+      if self.sort_types is not None and len(self.sort_types) > 0:
         text += '\nSort: '
         if self.sort_type_index != -1:
           text += f'{self.sort_types[self.sort_type_index]} ({self.sort_dir.value.upper()})'
@@ -384,10 +384,10 @@ class List(Generic[Id, ActionId]):
     self.__show()
   def __change_sort_dir(self) -> None:
     if self.sort_type_index != -1:  
-      if self.sort_dir == Sort.Type.ASC:
-        self.sort_dir = Sort.Type.DESC
+      if self.sort_dir == SortType.ASC:
+        self.sort_dir = SortType.DESC
       else:
-        self.sort_dir = Sort.Type.ASC
+        self.sort_dir = SortType.ASC
       self.__set_items(self.__sort_listener.emit(self.sort_types[self.sort_type_index], self.sort_dir))
       self.__show()
   def set_sort_listener(self, listener: ListSortFunction | None) -> None:

@@ -20,11 +20,11 @@ class Sort(Enum):
   TITLE = 'title'
   ALBUM = 'album'
   YEAR = 'year'
-  class Type(Enum):
-    ASC = 'asc'
-    DESC = 'desc'
+class SortType(Enum):
+  ASC = 'asc'
+  DESC = 'desc'
 
-LyricsProvider = Literal['AzLyrics', 'LyricsOvh', 'Lyrist']
+LyricsProvider = Literal['AzLyrics', 'LyricsOvh', 'Lyrist', 'Genius']
 
 class AppConfig:
   temp_folder: str = str(Path.joinpath(Path.home(), 'tmp'))
@@ -37,7 +37,7 @@ class AppConfig:
   lyrics_modifiers: dict[str, str] = {}
   lyrics_url_modifiers: UrlModifier = { "artist": {}, "title": {} }
   genres_url_modifiers: UrlModifier = { "artist": {}, "title": {} }
-  lyrics_provider: LyricsProvider = 'AzLyrics'
+  lyrics_provider: list[LyricsProvider] | LyricsProvider = ['AzLyrics', 'Genius']
 
   class Keys(dict):
     from uuid import UUID

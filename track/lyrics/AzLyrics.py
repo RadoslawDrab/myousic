@@ -11,7 +11,7 @@ class AzLyrics(Lyrics):
 
 	def get_url(self, artist: str, title: str) -> str:
 		def format_text(text: str) -> str:
-			return re.sub(r'[\[(].*[)\]]', '', re.sub(r'[ \'"]*', '', text)).lower()
+			return re.sub(r'[\[(].*[)\]]', '', re.sub(r'[ \'"]*', '', text or '')).lower()
 		return unidecode(self.lyrics_url.format(
 			artist=format_text(artist.split(',')[0] or artist),
 			title=format_text(title))
@@ -27,7 +27,6 @@ class AzLyrics(Lyrics):
 		if html is None:
 			return None, url
 
-		name = html.find_next('b').contents[0].text.strip()
 		lyrics = html.find_next('div').text.strip()
 
 		return self.format(lyrics), url
